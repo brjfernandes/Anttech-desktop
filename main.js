@@ -108,41 +108,59 @@ ipcMain.on('imprimir-nfce-silencioso', (event, pdfUrl, printerName) => {
 
     console.log('[NFC-e] Iniciando auto-print:', finalUrl);
     console.log('[NFC-e] Impressora:', printerName || '(padrão)');
-    console.log('[NFC-e] Temp file:', tempFile);
 
     const dlHandler = (e, item) => {
-        console.log('[NFC-e] will-download disparou. URL do item:', item.getURL());
         item.setSavePath(tempFile);
 
-        item.once('done', async (e, state) => {
-            console.log('[NFC-e] Download finalizado. State:', state);
+        item.once('done', (e, state) => {
             if (state !== 'completed') {
                 console.error('[NFC-e] Falha no download do PDF:', state);
                 return;
             }
             try {
-                const pdfToPrinter = require('pdf-to-printer');
-                console.log('[NFC-e] pdf-to-printer carregado. Enviando para impressora...');
-                const opcoes = {
-                    // noscale = imprime no tamanho original do PDF sem escalar.
-                    // "fit" escalava para cima aumentando a fonte e cortando a direita.
-                    printOptions: '"noscale"',
-                    ...(printerName && printerName.trim() !== '' ? { printer: printerName } : {})
-                };
-                await pdfToPrinter.print(tempFile, opcoes);
-                console.log('[NFC-e] Impressão enviada com sucesso.');
+                // Localizar SumatraPDF
+                const isPacked = app.isPackaged;
+                let sumatraPath;
+                if (isPacked) {
+                    sumatraPath = path.join(process.resourcesPath, 'SumatraPDF-3.4.6-32.exe');
+                } else {
+                    sumatraPath = path.join(__dirname, 'node_modules', 'pdf-to-printer', 'dist', 'SumatraPDF-3.4.6-32.exe');
+                }
+
+                // Ler dimensões reais do PDF (MediaBox)
+
+                const { execFile } = require('child_process');
+
+                const printSettings = 'fit';
+                const args = ['-print-settings', printSettings];
+
+                if (printerName && printerName.trim() !== '') {
+                    args.push('-print-to', printerName);
+                } else {
+                    args.push('-print-to-default');
+                }
+
+                args.push('-silent', tempFile);
+
+                console.log('[NFC-e] Comando:', sumatraPath, args.join(' '));
+
+                execFile(sumatraPath, args, (err) => {
+                    if (err) {
+                        console.error('[NFC-e] Erro SumatraPDF:', err.message);
+                    } else {
+                        console.log('[NFC-e] Impressão enviada com sucesso.');
+                    }
+                    setTimeout(() => fs.unlink(tempFile, () => {}), 10000);
+                });
             } catch (err) {
-                console.error('[NFC-e] Erro ao imprimir NFC-e:', err.message);
-                console.error('[NFC-e] Stack:', err.stack);
-            } finally {
+                console.error('[NFC-e] Erro ao imprimir:', err.message);
                 setTimeout(() => fs.unlink(tempFile, () => {}), 10000);
             }
         });
     };
 
-    // Usa a sessão do mainWindow (garante cookies autenticados)
     const ses = mainWindow.webContents.session;
     ses.once('will-download', dlHandler);
-    console.log('[NFC-e] Chamando downloadURL...');
     mainWindow.webContents.downloadURL(finalUrl);
 });
+
