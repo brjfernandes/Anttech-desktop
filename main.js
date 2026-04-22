@@ -131,7 +131,7 @@ ipcMain.on('imprimir-nfce-silencioso', (event, pdfUrl, printerName) => {
 
                 const { execFile } = require('child_process');
 
-                const printSettings = 'fit';
+                const printSettings = 'noscale';
                 const args = ['-print-settings', printSettings];
 
                 if (printerName && printerName.trim() !== '') {
