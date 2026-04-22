@@ -10,5 +10,7 @@ contextBridge.exposeInMainWorld('ElectronBridge', {
         ipcRenderer.send('imprimir-nfce-silencioso', pdfUrl, printerName);
     },
     // Solicita a lista de impressoras locais
-    obterImpressoras: () => ipcRenderer.invoke('obter-impressoras')
+    obterImpressoras: () => ipcRenderer.invoke('obter-impressoras'),
+    // Retorna a versão do aplicativo Desktop
+    versaoApp: () => ipcRenderer.invoke('obter-versao-app')
 });

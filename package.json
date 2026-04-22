@@ -1,6 +1,6 @@
 {
   "name": "anttech-desktop",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "Anttech Sistemas Desktop",
   "main": "main.js",
   "scripts": {
@@ -10,7 +10,8 @@
   "author": "Anttech",
   "license": "ISC",
   "dependencies": {
-    "electron-updater": "^6.3.9"
+    "electron-updater": "^6.3.9",
+    "pdf-to-printer": "^5.0.1"
   },
   "devDependencies": {
     "electron": "^29.1.0",
@@ -19,9 +20,25 @@
   "build": {
     "appId": "com.anttech.sistemas.totem",
     "productName": "Anttech Sistemas",
+    "artifactName": "Anttech-Sistemas-Setup.${ext}",
+    "compression": "maximum",
+    "extraResources": [
+      {
+        "from": "node_modules/pdf-to-printer/dist/SumatraPDF.exe",
+        "to": "."
+      }
+    ],
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "perMachine": true
     },
     "publish": [
       {
